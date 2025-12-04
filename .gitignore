@@ -1,3 +1,4 @@
+.nvimlog
 tt.*
 .tests
 doc/tags
