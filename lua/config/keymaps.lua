@@ -7,3 +7,7 @@ vim.keymap.set("n", "q", "<cmd>q<cr>", { desc = "Quit", silent = true })
 
 -- Record macros with 'Q'
 vim.keymap.set("n", "Q", "q", { desc = "Record Macro" })
+
+-- Buffer switching with Tab / Shift-Tab
+vim.keymap.set("n", "<Tab>", "<cmd>BufferLineCycleNext<cr>", { desc = "Next Buffer" })
+vim.keymap.set("n", "<S-Tab>", "<cmd>BufferLineCyclePrev<cr>", { desc = "Prev Buffer" })
