@@ -25,6 +25,9 @@ return {
         -- "GitSignsCurrentLineBlame" handles inline git blame (if you use gitsigns)
         set_hl(0, "Comment", { fg = comment_grey, italic = true })
         set_hl(0, "GitSignsCurrentLineBlame", { fg = comment_grey, italic = true })
+
+        -- Fix float title background to match Normal (override base46's grey)
+        set_hl(0, "FloatTitle", { bg = "#14191e", fg = "#dadada" })
       end
 
       -- Apply immediately
@@ -40,6 +43,13 @@ return {
       vim.api.nvim_create_autocmd("User", {
         pattern = "NvThemeReload",
         callback = fix_highlights,
+      })
+
+      -- Apply after everything loads (ensures override after base46)
+      vim.api.nvim_create_autocmd("VimEnter", {
+        callback = function()
+          vim.defer_fn(fix_highlights, 100)
+        end,
       })
     end,
   },
