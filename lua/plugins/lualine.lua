@@ -128,6 +128,16 @@ return {
           icon = "",
           padding = 1,
         },
+        {
+          function()
+            if vim.bo.expandtab then
+              return "␣ " .. vim.fn.shiftwidth()
+            else
+              return "⇥ " .. vim.bo.tabstop
+            end
+          end,
+          padding = 1,
+        },
         { "progress", separator = " ", padding = { left = 1, right = 0 } },
         { "location", padding = { left = 0, right = 1 } },
       }
