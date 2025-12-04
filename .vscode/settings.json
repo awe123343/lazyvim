@@ -1,0 +1,7 @@
+{
+    "editor.formatOnSave": true,
+    "[lua]": {
+        "editor.defaultFormatter": "johnnymorganz.stylua",
+        "editor.formatOnSave": true,
+    }
+}

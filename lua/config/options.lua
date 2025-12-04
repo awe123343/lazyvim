@@ -21,3 +21,19 @@ opt.listchars = {
   extends = "›", -- Character to show when line extends beyond screen
   precedes = "‹", -- Character to show when line precedes screen
 }
+
+-- NvChad Base46 Cache Setup
+-- We keep this here to ensure the cache path is set globally before any plugin loads.
+-- This is often required by base46 to know where to write/read its compiled files.
+vim.g.base46_cache = vim.fn.stdpath("data") .. "/base46_cache/"
+
+-- Pre-load base46 highlights from cache
+-- We keep this to ensure NvChad highlights are available as early as possible,
+-- preventing a "flash of unstyled content" or missing highlights during startup
+-- before the plugin actually loads.
+if vim.fn.filereadable(vim.g.base46_cache .. "defaults") == 1 then
+  dofile(vim.g.base46_cache .. "defaults")
+end
+if vim.fn.filereadable(vim.g.base46_cache .. "statusline") == 1 then
+  dofile(vim.g.base46_cache .. "statusline")
+end
