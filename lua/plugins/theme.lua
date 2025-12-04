@@ -10,11 +10,12 @@ return {
         local set_hl = vim.api.nvim_set_hl
         local subtle_grey = "#232a2d" -- Darker grey for invisible chars (less visible)
         local comment_grey = "#50575a" -- Lighter grey for actual comments (visible)
+        local whitespace_grey = "#3a4447" -- Medium grey for whitespace (more visible than subtle)
 
-        -- Fix for Red ListChars (Whitespace/NonText) - keep these subtle
-        set_hl(0, "Whitespace", { fg = subtle_grey })
-        set_hl(0, "NonText", { fg = subtle_grey })
-        set_hl(0, "SpecialKey", { fg = subtle_grey })
+        -- Fix for Red ListChars (Whitespace/NonText)
+        set_hl(0, "Whitespace", { fg = whitespace_grey })
+        set_hl(0, "NonText", { fg = whitespace_grey })
+        set_hl(0, "SpecialKey", { fg = whitespace_grey })
 
         -- Indentation guides - subtle
         set_hl(0, "IblIndent", { fg = subtle_grey })

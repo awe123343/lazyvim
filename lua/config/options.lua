@@ -10,14 +10,14 @@ opt.tabstop = 4
 -- opt.softtabstop = 4
 -- opt.expandtab = true
 
--- Show whitespace characters (like VSCode)
 opt.list = true
+-- Replace · to • to have more visible whitespace characters
 opt.listchars = {
-  space = "·",
-  tab = " ▸",
+  -- space = "·", -- Removed: don't show all spaces (would show in middle of words)
+  tab = "  ▸",
   nbsp = "␣",
-  lead = ".",
-  trail = ".",
+  lead = "·",
+  trail = "·",
   extends = "›", -- Character to show when line extends beyond screen
   precedes = "‹", -- Character to show when line precedes screen
 }
