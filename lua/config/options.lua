@@ -6,9 +6,9 @@ local opt = vim.opt
 
 -- Tab settings (treat hard tabs as 4 spaces)
 opt.tabstop = 4
-opt.shiftwidth = 4
-opt.softtabstop = 4
-opt.expandtab = true
+-- opt.shiftwidth = 4
+-- opt.softtabstop = 4
+-- opt.expandtab = true
 
 -- Show whitespace characters (like VSCode)
 opt.list = true
