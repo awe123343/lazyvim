@@ -75,71 +75,100 @@ return {
         return result
       end
 
-      -- Add LSP/formatters/linters to statusline (like auto-lualine)
+      -- Tab/space indicator styled like Copilot (text/icon only, no pill)
+      local indent_indicator = {
+        function()
+          local expandtab = vim.bo.expandtab
+          local size = expandtab and vim.bo.shiftwidth or vim.bo.tabstop
+          if size == 0 then
+            size = expandtab and vim.o.shiftwidth or vim.o.tabstop
+          end
+          local icon = expandtab and "␣" or "⇥"
+          return string.format("%s %d", icon, size)
+        end,
+        padding = 1,
+        color = function()
+          return { fg = colors.yellow }
+        end,
+      }
+
+      -- LSP/Formatters/Linters component
+      local lsp_component = {
+        function()
+          local buf_ft = vim.bo.filetype
+          local names = {}
+
+          -- Get LSP clients (exclude copilot, null-ls)
+          local clients = vim.lsp.get_clients({ bufnr = 0 })
+          if #clients == 0 then
+            return "LSP Inactive"
+          end
+
+          for _, client in ipairs(clients) do
+            if client.name ~= "copilot" then
+              table.insert(names, client.name)
+            end
+          end
+
+          -- Get formatters from conform.nvim
+          local conform_ok, conform = pcall(require, "conform")
+          if conform_ok then
+            local formatters = conform.list_formatters_for_buffer(0)
+            for _, fmt in ipairs(formatters) do
+              if type(fmt) == "string" then
+                table.insert(names, fmt)
+              elseif type(fmt) == "table" and fmt.name then
+                table.insert(names, fmt.name)
+              end
+            end
+          end
+
+          -- Get linters from nvim-lint
+          local lint_ok, lint = pcall(require, "lint")
+          if lint_ok then
+            local linters = lint.linters_by_ft[buf_ft] or {}
+            for _, linter in ipairs(linters) do
+              if type(linter) == "string" then
+                table.insert(names, linter)
+              end
+            end
+          end
+
+          -- Deduplicate and return
+          local unique_names = unique_list(names)
+          if #unique_names == 0 then
+            return "LSP Inactive"
+          end
+          return table.concat(unique_names, ", ")
+        end,
+        icon = " ",
+        padding = 1,
+        -- separator = { left = "" },
+        separator = { left = "" },
+      }
+
+      opts.sections.lualine_x = opts.sections.lualine_x or {}
+
+      -- Append components to the end of lualine_x
+      table.insert(opts.sections.lualine_x, indent_indicator)
+
+      -- Move LSP component to lualine_y (grey background)
       opts.sections.lualine_y = {
+        lsp_component,
         {
-          function()
-            local buf_ft = vim.bo.filetype
-            local names = {}
-
-            -- Get LSP clients (exclude copilot, null-ls)
-            local clients = vim.lsp.get_clients({ bufnr = 0 })
-            if #clients == 0 then
-              return "LSP Inactive"
-            end
-
-            for _, client in ipairs(clients) do
-              if client.name ~= "copilot" then
-                table.insert(names, client.name)
-              end
-            end
-
-            -- Get formatters from conform.nvim
-            local conform_ok, conform = pcall(require, "conform")
-            if conform_ok then
-              local formatters = conform.list_formatters_for_buffer(0)
-              for _, fmt in ipairs(formatters) do
-                if type(fmt) == "string" then
-                  table.insert(names, fmt)
-                elseif type(fmt) == "table" and fmt.name then
-                  table.insert(names, fmt.name)
-                end
-              end
-            end
-
-            -- Get linters from nvim-lint
-            local lint_ok, lint = pcall(require, "lint")
-            if lint_ok then
-              local linters = lint.linters_by_ft[buf_ft] or {}
-              for _, linter in ipairs(linters) do
-                if type(linter) == "string" then
-                  table.insert(names, linter)
-                end
-              end
-            end
-
-            -- Deduplicate and return
-            local unique_names = unique_list(names)
-            if #unique_names == 0 then
-              return "LSP Inactive"
-            end
-            return table.concat(unique_names, ", ")
-          end,
-          icon = "",
-          padding = 1,
+          "progress",
+          separator = { left = "" },
+          padding = { left = 1, right = 1 },
+          color = { fg = colors.green, bg = colors.black },
         },
+      }
+
+      -- Move Progress/Location to lualine_z (green background, replacing time)
+      opts.sections.lualine_z = {
         {
-          function()
-            if vim.bo.expandtab then
-              return "␣ " .. vim.fn.shiftwidth()
-            else
-              return "⇥ " .. vim.bo.tabstop
-            end
-          end,
-          padding = 1,
+          "location",
+          padding = { left = 1, right = 1 },
         },
-        { "progress", separator = " ", padding = { left = 1, right = 0 } },
-        { "location", padding = { left = 0, right = 1 } },
       }
 
       return opts
