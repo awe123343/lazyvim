@@ -62,6 +62,34 @@ return {
         },
       }
 
+      -- Helper to get mode-based color
+      local function get_mode_color()
+        local mode = vim.api.nvim_get_mode().mode:sub(1, 1)
+        local mode_colors = {
+          n = colors.green,
+          i = colors.blue,
+          v = colors.purple,
+          V = colors.purple,
+          ["\22"] = colors.purple,
+          s = colors.purple,
+          S = colors.purple,
+          ["\19"] = colors.purple,
+          c = colors.yellow,
+          R = colors.red,
+          t = colors.green,
+        }
+        return mode_colors[mode] or colors.green
+      end
+
+      opts.sections.lualine_b = {
+        {
+          "branch",
+          color = function()
+            return { fg = get_mode_color() }
+          end,
+        },
+      }
+
       -- Helper to deduplicate list
       local function unique_list(list)
         local seen = {}
@@ -159,7 +187,12 @@ return {
           "progress",
           separator = { left = "" },
           padding = { left = 1, right = 1 },
-          color = { fg = colors.green, bg = colors.black },
+          color = function()
+            return {
+              fg = get_mode_color(),
+              bg = colors.black,
+            }
+          end,
         },
       }
 
