@@ -17,36 +17,52 @@ return {
         dark_grey = "#1e2528", -- Darker grey for inactive/bases
       }
 
+      -- NvChad auto-lualine pastel colors
+      local pastel_colors = {
+        normal = "#9ae38a",
+        insert = "#c4ffd3",
+        visual = "#9affff",
+        replace = "#f6f8ff",
+        command = "#b6f0ff",
+        terminal = "#b6f0ff",
+        inactive = "#9ae38a",
+      }
+
       -- Define Everblush lualine theme (Custom Configuration)
       local everblush_theme = {
         normal = {
-          a = { bg = colors.green, fg = colors.black, gui = "bold" },
+          a = { bg = pastel_colors.normal, fg = colors.black, gui = "bold" },
           b = { bg = colors.grey, fg = colors.white },
           c = { bg = colors.black, fg = colors.white },
         },
         insert = {
-          a = { bg = colors.blue, fg = colors.black, gui = "bold" },
+          a = { bg = pastel_colors.insert, fg = colors.black, gui = "bold" },
           b = { bg = colors.grey, fg = colors.white },
           c = { bg = colors.black, fg = colors.white },
         },
         visual = {
-          a = { bg = colors.purple, fg = colors.black, gui = "bold" },
+          a = { bg = pastel_colors.visual, fg = colors.black, gui = "bold" },
           b = { bg = colors.grey, fg = colors.white },
           c = { bg = colors.black, fg = colors.white },
         },
         replace = {
-          a = { bg = colors.red, fg = colors.black, gui = "bold" },
+          a = { bg = pastel_colors.replace, fg = colors.black, gui = "bold" },
           b = { bg = colors.grey, fg = colors.white },
           c = { bg = colors.black, fg = colors.white },
         },
         command = {
-          a = { bg = colors.yellow, fg = colors.black, gui = "bold" },
+          a = { bg = pastel_colors.command, fg = colors.black, gui = "bold" },
           b = { bg = colors.grey, fg = colors.white },
           c = { bg = colors.black, fg = colors.white },
         },
         inactive = {
           a = { bg = colors.black, fg = colors.white, gui = "bold" },
           b = { bg = colors.black, fg = colors.white },
+          c = { bg = colors.black, fg = colors.white },
+        },
+        terminal = {
+          a = { bg = pastel_colors.terminal, fg = colors.black, gui = "bold" },
+          b = { bg = colors.grey, fg = colors.white },
           c = { bg = colors.black, fg = colors.white },
         },
       }
@@ -66,19 +82,19 @@ return {
       local function get_mode_color()
         local mode = vim.api.nvim_get_mode().mode:sub(1, 1)
         local mode_colors = {
-          n = colors.green,
-          i = colors.blue,
-          v = colors.purple,
-          V = colors.purple,
-          ["\22"] = colors.purple,
-          s = colors.purple,
-          S = colors.purple,
-          ["\19"] = colors.purple,
-          c = colors.yellow,
-          R = colors.red,
-          t = colors.green,
+          n = pastel_colors.normal,
+          i = pastel_colors.insert,
+          v = pastel_colors.visual,
+          V = pastel_colors.visual,
+          ["\22"] = pastel_colors.visual,
+          s = pastel_colors.visual, -- select = visual
+          S = pastel_colors.visual,
+          ["\19"] = pastel_colors.visual,
+          c = pastel_colors.command,
+          R = pastel_colors.replace,
+          t = pastel_colors.terminal,
         }
-        return mode_colors[mode] or colors.green
+        return mode_colors[mode] or pastel_colors.normal
       end
 
       opts.sections.lualine_b = {
