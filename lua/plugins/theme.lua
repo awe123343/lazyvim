@@ -36,6 +36,10 @@ return {
         -- Float title
         set_hl(0, "FloatTitle", { bg = "#14191e", fg = white })
 
+        -- Statement (Light Purple #ce89df - Color 13)
+        -- Best contrast vs Copilot (Cyan) & maintains Everblush soft pastel aesthetic
+        set_hl(0, "Statement", { fg = "#ce89df" })
+
         -- Base highlights (for fallback chain)
         set_hl(0, "Added", { fg = green })
         set_hl(0, "Removed", { fg = red })
