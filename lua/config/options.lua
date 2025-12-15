@@ -38,14 +38,3 @@ end
 if vim.fn.filereadable(vim.g.base46_cache .. "statusline") == 1 then
   dofile(vim.g.base46_cache .. "statusline")
 end
-
--- NvChad-style: disable LSP semantic tokens so Treesitter highlighting takes precedence.
--- This gives more consistent colors across languages (Treesitter uses base46's hl groups).
-vim.api.nvim_create_autocmd("LspAttach", {
-  callback = function(args)
-    local client = vim.lsp.get_client_by_id(args.data.client_id)
-    if client and client.server_capabilities then
-      client.server_capabilities.semanticTokensProvider = nil
-    end
-  end,
-})
