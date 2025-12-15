@@ -18,7 +18,13 @@ return {
   {
     "linux-cultist/venv-selector.nvim",
     opts = {
-      name = { ".venv" },
+      name = {
+        ".venv",
+      },
+      auto = true,
+      options = {
+        notify_user_on_venv_activation = true,
+      },
     },
   },
 }
