@@ -23,6 +23,14 @@ return {
     end, { defer_vim_enter = 80 })
   end,
   opts = {
+    notifier = {
+      timeout = 10000, -- 10 seconds (default is 3000)
+    },
+    styles = {
+      notification = {
+        wo = { wrap = true },
+      },
+    },
     explorer = {
       replace_netrw = true,
     },
