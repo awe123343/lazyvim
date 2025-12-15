@@ -1,13 +1,20 @@
 return {
-  {
-    "folke/snacks.nvim",
-    opts = {
-      indent = {
-        indent = {
-          char = "▏",
+  "folke/snacks.nvim",
+  opts = {
+    explorer = {
+      replace_netrw = true,
+    },
+    picker = {
+      hidden = true,
+      ignored = true,
+      sources = {
+        explorer = {
+          hidden = true,
+          ignored = true,
         },
-        scope = {
-          char = "▏",
+        files = {
+          hidden = true,
+          ignored = true,
         },
       },
     },

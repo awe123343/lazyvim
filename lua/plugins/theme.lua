@@ -16,6 +16,10 @@ return {
         local light_grey = "#50575a"
         local white = "#dadada"
         local subtle_grey = "#232a2d"
+        local muted_green = "#6c9c73" -- Muted Green (Everblush equivalent of TokyoNight's muted blue)
+
+        -- MiniIcons colors (for file tree icons)
+        set_hl(0, "MiniIconsDarkGreen", { fg = muted_green }) -- Use muted green for explorer icon
 
         -- Subtle backgrounds (90% black mixed with color)
         local add_bg = "#1f2d27"
@@ -32,6 +36,21 @@ return {
         -- Comments
         set_hl(0, "Comment", { fg = light_grey, italic = true })
         set_hl(0, "GitSignsCurrentLineBlame", { fg = light_grey, italic = true })
+
+        -- File Explorer (Snacks) - show hidden/ignored files like normal files
+        local hidden_fg = light_grey
+        set_hl(0, "SnacksPickerGitIgnored", { fg = hidden_fg })
+        set_hl(0, "SnacksPickerHidden", { fg = hidden_fg })
+        set_hl(0, "SnacksPickerFileHidden", { fg = hidden_fg })
+        set_hl(0, "SnacksPickerFileIgnored", { fg = hidden_fg })
+        set_hl(0, "SnacksPickerDirHidden", { fg = hidden_fg })
+        set_hl(0, "SnacksPickerDirIgnored", { fg = hidden_fg })
+        set_hl(0, "SnacksPickerPathHidden", { fg = hidden_fg })
+        set_hl(0, "SnacksPickerPathIgnored", { fg = hidden_fg })
+        -- Also override Comment linking if Snacks falls back to it for these
+        set_hl(0, "SnacksPickerComment", { fg = hidden_fg })
+        -- Snacks Picker - make directory paths readable (default links to NonText which is too dark)
+        set_hl(0, "SnacksPickerDir", { fg = hidden_fg })
 
         -- Float title
         set_hl(0, "FloatTitle", { bg = "#14191e", fg = white })
@@ -112,6 +131,19 @@ return {
         end,
       })
     end,
+  },
+
+  -- Override MiniIcons to use Dark Green for Snacks Explorer
+  {
+    "nvim-mini/mini.icons",
+    opts = {
+      filetype = {
+        snacks_explorer = { glyph = "", hl = "MiniIconsDarkGreen" },
+        snacks_picker_list = { glyph = "", hl = "MiniIconsDarkGreen" },
+        snacks_picker_input = { glyph = "", hl = "MiniIconsDarkGreen" },
+        snacks = { glyph = "", hl = "MiniIconsDarkGreen" },
+      },
+    },
   },
 
   {
