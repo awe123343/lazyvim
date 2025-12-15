@@ -1,3 +1,9 @@
+-- Disabled: we use NvChad `base46` + `ui` for theming now.
+-- Keeping the old theme config here for reference; remove the guard to re-enable.
+if true then
+  return {}
+end
+
 return {
   -- Add Everblush plugin (for lualine/picker assets)
   {

@@ -1,22 +1,44 @@
+-- Define Everblush colors (Custom adjusted palette)
+local colors = {
+  black = "#141b1e",
+  white = "#dadada",
+  red = "#e57474",
+  green = "#8ccf7e",
+  blue = "#67b0e8",
+  yellow = "#e5c76b",
+  purple = "#c47fd5",
+  cyan = "#6cbfbf",
+  grey = "#232a2d", -- Lighter Background
+  light_grey = "#2d3437", -- Slightly lighter than grey for separation
+  dark_grey = "#1e2528", -- Darker grey for inactive/bases
+}
+
 return {
   {
     "nvim-lualine/lualine.nvim",
-    opts = function(_, opts)
-      -- Define Everblush colors (Custom adjusted palette)
-      local colors = {
-        black = "#141b1e",
-        white = "#dadada",
-        red = "#e57474",
-        green = "#8ccf7e",
-        blue = "#67b0e8",
-        yellow = "#e5c76b",
-        purple = "#c47fd5",
-        cyan = "#6cbfbf",
-        grey = "#232a2d", -- Lighter Background
-        light_grey = "#2d3437", -- Slightly lighter than grey for separation
-        dark_grey = "#1e2528", -- Darker grey for inactive/bases
-      }
+    init = function()
+      local hl = require("util.hl")
 
+      -- Fix Trouble breadcrumbs "white blocks":
+      -- Trouble's statusline segments end with `%*` which resets to `StatusLine`.
+      -- The separators between segments are plain spaces, so they inherit `StatusLine`.
+      -- If `StatusLine.bg` doesn't match lualine's background, you get blocky separators.
+      -- We keep LazyVim's breadcrumbs implementation intact and just align `StatusLine`.
+      hl.on_colorscheme("lualine_statusline", function()
+        vim.api.nvim_set_hl(0, "StatusLine", { fg = colors.white, bg = colors.black })
+        vim.api.nvim_set_hl(0, "StatusLineNC", { fg = colors.white, bg = colors.black })
+      end)
+
+      -- We want italic comments globally, but using `Comment` as `pretty_path().directory_hl`
+      -- makes the whole path italic. Create a non-italic path highlight with the same fg.
+      hl.on_colorscheme("lualine_path_hl", function()
+        local fg = hl.get_fg({ "Comment" })
+        if fg then
+          vim.api.nvim_set_hl(0, "LualinePath", { fg = fg })
+        end
+      end)
+    end,
+    opts = function(_, opts)
       -- NvChad auto-lualine pastel colors
       local pastel_colors = {
         normal = "#9ae38a",
@@ -105,6 +127,34 @@ return {
           end,
         },
       }
+
+      -- Match LazyVim-vanilla look: dim directories + accent-colored filename in the path
+      -- `LazyVim.lualine.pretty_path()` defaults to `filename_hl = "Bold"` and empty `directory_hl`,
+      -- which in our custom lualine theme ends up looking too white.
+      if opts.sections.lualine_c then
+        for i, component in ipairs(opts.sections.lualine_c) do
+          -- In LazyVim, pretty_path is inserted as a bare table wrapper: { LazyVim.lualine.pretty_path() }
+          -- so it's a table with a single [1]=function and no extra keys.
+          if
+            type(component) == "table"
+            and type(component[1]) == "function"
+            and component.cond == nil
+            and component.color == nil
+            and component.icon == nil
+            and component.padding == nil
+            and component.separator == nil
+            and component.fmt == nil
+          then
+            opts.sections.lualine_c[i] = {
+              LazyVim.lualine.pretty_path({
+                directory_hl = "LualinePath",
+                filename_hl = "Bold",
+              }),
+            }
+            break
+          end
+        end
+      end
 
       -- Helper to deduplicate list
       local function unique_list(list)
