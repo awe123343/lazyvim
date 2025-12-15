@@ -25,7 +25,8 @@ opt.listchars = {
 -- NvChad Base46 Cache Setup
 -- We keep this here to ensure the cache path is set globally before any plugin loads.
 -- This is often required by base46 to know where to write/read its compiled files.
-vim.g.base46_cache = vim.fn.stdpath("data") .. "/base46_cache/"
+-- Match NvChad's default cache path
+vim.g.base46_cache = vim.fn.stdpath("data") .. "/base46/"
 
 -- Pre-load base46 highlights from cache
 -- We keep this to ensure NvChad highlights are available as early as possible,
