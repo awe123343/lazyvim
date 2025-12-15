@@ -106,6 +106,13 @@ M.base46 = {
     -- base46 sets `@comment` without italics by default, so mirror `Comment` here.
     ["@comment"] = { fg = light_grey, italic = true },
 
+    -- TODO/FIXME/HACK/NOTE keywords: match TokyoNight style (just fg, no bold/bg).
+    ["@comment.todo"] = { fg = "black", bg = "#8ccf7e" }, -- green (subtle)
+    ["@comment.note"] = { fg = "black", bg = "#67b0e8" }, -- blue (info)
+    ["@comment.hint"] = { fg = "black", bg = "#67b0e8" }, -- blue (info)
+    ["@comment.warning"] = { fg = "black", bg = "#e5c76b" }, -- yellow (warning)
+    ["@comment.error"] = { fg = "black", bg = "#e57474" }, -- red (error/fixme)
+
     -- TokyoNight-style *roles*, but tuned for Everblush:
     -- - parameters: cyan (so they don't collide with JSX tags (yellow) or JSX attributes (red))
     -- - members/properties: Everblush red (closer to NvChad/base46 everblush look, esp. in Python classes)
