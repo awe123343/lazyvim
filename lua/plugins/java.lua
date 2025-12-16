@@ -15,8 +15,15 @@ return {
           "build.xml",
         })
       end,
+      on_attach = function(client, bufnr)
+        if client and client.server_capabilities then
+          client.server_capabilities.documentFormattingProvider = false
+          client.server_capabilities.documentRangeFormattingProvider = false
+        end
+      end,
       settings = {
         java = {
+          format = { enabled = false },
           configuration = {
             runtimes = {
               {
