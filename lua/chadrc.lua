@@ -93,11 +93,6 @@ M.base46 = {
     FloatTitle = { bg = "NONE" },
     FloatBorder = { bg = "NONE" },
 
-    -- LazyVim shows "recorded keystrokes" in the statusline via a component that uses
-    -- `Snacks.util.color("Statement")`. In everblush/base46 this can skew too red,
-    -- so make `Statement` a softer purple for better contrast.
-    Statement = { fg = "#ce89df" },
-
     -- Match LazyVim-vanilla: italic comments.
     -- (Keep base46's fg; just add the style.)
     Comment = { fg = light_grey, italic = true },
