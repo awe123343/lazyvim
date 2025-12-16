@@ -31,6 +31,9 @@ return {
         wo = { wrap = true },
       },
     },
+    dashboard = {
+      example = "advanced",
+    },
     explorer = {
       replace_netrw = true,
     },
