@@ -208,11 +208,19 @@ return {
           local conform_ok, conform = pcall(require, "conform")
           if conform_ok then
             local formatters = conform.list_formatters_for_buffer(0)
+            local exclude = {
+              ["trim_whitespace"] = true,
+              ["trim_newlines"] = true,
+            }
+
             for _, fmt in ipairs(formatters) do
-              if type(fmt) == "string" then
-                table.insert(names, fmt)
-              elseif type(fmt) == "table" and fmt.name then
-                table.insert(names, fmt.name)
+              -- 1. If string, use it.
+              -- 2. If table with .name (rare in this API but safe), use it.
+              -- 3. If table array (alternatives), use the first entry [1].
+              local name = type(fmt) == "string" and fmt or (fmt.name or fmt[1])
+
+              if name and type(name) == "string" and not exclude[name] then
+                table.insert(names, name)
               end
             end
           end
