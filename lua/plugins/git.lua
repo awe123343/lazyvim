@@ -12,6 +12,27 @@ return {
     },
   },
   {
+    "f-person/git-blame.nvim",
+    event = "VeryLazy",
+    opts = {
+      enabled = false,
+    },
+    keys = {
+      {
+        "<leader>go",
+        "<cmd>GitBlameOpenFileURL<cr>",
+        desc = "Open File URL (Permalink)",
+        mode = { "n", "v" },
+      },
+      {
+        "<leader>gO",
+        "<cmd>GitBlameCopyFileURL<cr>",
+        desc = "Copy File URL (Permalink)",
+        mode = { "n", "v" },
+      },
+    },
+  },
+  {
     "sindrets/diffview.nvim",
     cmd = {
       "DiffviewOpen",
