@@ -1,95 +1,106 @@
 local prefix = "<leader>S"
 
-local function patch_codesnap()
+local function patch_codesnap_runtime()
   local data_dir = vim.fn.stdpath("data")
-  local codesnap_dir = data_dir .. "/lazy/codesnap.nvim"
-  local generator_so = codesnap_dir .. "/lua/generator.so"
-  local init_file = codesnap_dir .. "/lua/codesnap/init.lua"
+  local plugin_dir = data_dir .. "/lazy/codesnap.nvim"
+  local generator_so = plugin_dir .. "/lua/generator.so"
 
-  -- Prevent downloading pre-compiled libraries
-  package.loaded["codesnap.fetch"] = {
-    ensure_lib = function()
-      if vim.fn.filereadable(generator_so) == 1 then
-        return generator_so
-      end
-      error("generator.so not found. Please run :Lazy build codesnap.nvim")
-    end,
-  }
-
-  -- Pre-load generator using loadlib to avoid cpath pollution
-  local generator_module = nil
-  if vim.fn.filereadable(generator_so) == 1 then
-    local load_func, err = package.loadlib(generator_so, "luaopen_generator")
-    if load_func then
-      generator_module = load_func()
-      package.loaded["generator"] = generator_module
-    end
-  end
-
-  -- Mock codesnap.module to prevent it from polluting cpath
-  package.loaded["codesnap.module"] = {
-    generator = generator_module,
-    load_generator = function()
-      return generator_module
-    end,
-    get_lib_extension = function()
-      return "so"
-    end,
-    generator_file_path = function()
+  local function ensure_generator_path()
+    if vim.fn.filereadable(generator_so) == 1 then
       return generator_so
-    end,
+    end
+    error("CodeSnap: generator.so not found. Run :Lazy build codesnap.nvim", 0)
+  end
+
+  package.loaded["codesnap.fetch"] = {
+    ensure_lib = ensure_generator_path,
   }
 
-  -- Patch static config to fix save_path nil error and apply our settings
-  local ok, real_static = pcall(require, "codesnap.static")
-  if ok and real_static and real_static.config then
-    real_static.config.save_path = "~/Pictures/codesnap"
-    real_static.config.show_line_number = true
-    if real_static.config.snapshot_config then
-      real_static.config.snapshot_config.theme = "candy"
-      if real_static.config.snapshot_config.window then
-        real_static.config.snapshot_config.window.mac_window_bar = false
-      end
-      if
-        real_static.config.snapshot_config.code_config and real_static.config.snapshot_config.code_config.breadcrumbs
-      then
-        real_static.config.snapshot_config.code_config.breadcrumbs.enable = true
-      end
-      if real_static.config.snapshot_config.watermark then
-        real_static.config.snapshot_config.watermark.content = ""
-      end
-    end
+  local patched_module = {
+    generator = nil,
+  }
+
+  function patched_module.get_lib_extension()
+    return "so"
   end
 
-  -- Patch init.lua: fix bugs in v2.0.0
-  -- 1. save_snapshot doesn't exist, should be save(file_path, config)
-  -- 2. "config.save_path" variable is undefined, should use "save_path"
-  if vim.fn.filereadable(init_file) == 1 then
-    local content = vim.fn.readfile(init_file)
-    local new_content = {}
-    local patched = false
-    for _, line in ipairs(content) do
-      if line:find('require%("generator"%)%.save_snapshot%(config%)') then
-        line = '  require("generator").save(save_path, config_module.get_config())'
-        patched = true
-      elseif line:find("%.%. config%.save_path") or line:find('" .. config.save_path') then
-        -- Only replace standalone "config.save_path", not "static.config.save_path"
-        line = line:gsub('" %.%. config%.save_path', '" .. save_path')
-        patched = true
-      end
-      table.insert(new_content, line)
-    end
-    if patched then
-      vim.fn.writefile(new_content, init_file)
-    end
+  function patched_module.generator_file_path()
+    return ensure_generator_path()
   end
+
+  function patched_module.load_generator()
+    if patched_module.generator then
+      return patched_module.generator
+    end
+
+    local load_func, err = package.loadlib(ensure_generator_path(), "luaopen_generator")
+    if not load_func then
+      error("CodeSnap: failed to load generator: " .. (err or "unknown error"), 0)
+    end
+
+    local ok, module_or_err = pcall(load_func)
+    if not ok then
+      error("CodeSnap: generator init failed: " .. module_or_err, 0)
+    end
+
+    patched_module.generator = module_or_err
+    package.loaded["generator"] = module_or_err
+    return patched_module.generator
+  end
+
+  package.loaded["codesnap.module"] = patched_module
 end
 
 return {
   "mistricky/codesnap.nvim",
   build = "make build_generator && rm -rf lua/libs",
-  init = function()
-    patch_codesnap()
+  config = function(_, opts)
+    patch_codesnap_runtime()
+
+    local codesnap = require("codesnap")
+    codesnap.setup(opts)
+
+    local static = require("codesnap.static")
+    local module = require("codesnap.module")
+    local config_module = require("codesnap.config")
+    local generator = module.load_generator()
+
+    -- Ensure save_path always exists so commands do not crash
+    static.config.save_path = static.config.save_path or opts.save_path or "~/Pictures/codesnap"
+
+    codesnap.save = function(save_path)
+      local path = save_path
+      if path == nil or path == "" then
+        path = static.config.save_path
+      end
+      if path == nil or path == "" then
+        error("Save path is not specified", 0)
+      end
+
+      static.config.save_path = path
+
+      local matched_extension = path:match("%.(.+)$")
+      if matched_extension ~= "png" and matched_extension ~= nil then
+        error("The extension of save_path should be .png", 0)
+      end
+
+      generator.save(path, config_module.get_config())
+      vim.notify("Save snapshot in " .. path .. " successfully")
+    end
+
+    local function redefine_command(name, fn)
+      vim.api.nvim_create_user_command(name, function(params)
+        local arg = params.fargs[1]
+        local ok, err = xpcall(function()
+          fn(arg)
+        end, debug.traceback)
+        if not ok then
+          vim.notify(err, vim.log.levels.ERROR)
+        end
+      end, { nargs = "*", range = "%", force = true })
+    end
+
+    redefine_command("CodeSnapSave", codesnap.save)
   end,
   cmd = {
     "CodeSnap",
@@ -125,7 +136,7 @@ return {
   },
   opts = {
     save_path = "~/Pictures/codesnap",
-    show_line_number = true,
+    show_line_number = false,
     snapshot_config = {
       theme = "candy",
       window = {
@@ -133,7 +144,7 @@ return {
       },
       code_config = {
         breadcrumbs = {
-          enable = true,
+          enable = false,
         },
       },
       watermark = {
