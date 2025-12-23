@@ -1,7 +1,12 @@
 return {
   {
     "scalameta/nvim-metals",
-    ft = { "scala", "sbt", "sc" }, -- Only Scala files, NOT Java
+    ft = {
+      "scala",
+      "sbt",
+      "sc",
+      "java",
+    }, -- Only Scala files, NOT Java
     opts = function()
       local metals_config = require("metals").bare_config()
 
