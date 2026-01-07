@@ -6,7 +6,7 @@ return {
       "sbt",
       "sc",
       "java",
-    }, -- Only Scala files, NOT Java
+    },
     opts = function()
       local metals_config = require("metals").bare_config()
 
