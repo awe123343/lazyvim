@@ -21,11 +21,11 @@ return {
 
       opts.servers = opts.servers or {}
       opts.servers.csharp_ls = {
-        enabled = false,
+        enabled = true,
         on_attach = make_inlay_hints_on_attach,
       }
       opts.servers.omnisharp = {
-        enabled = true,
+        enabled = false,
         on_attach = make_inlay_hints_on_attach,
       }
     end,
@@ -41,8 +41,8 @@ return {
     "mason-org/mason.nvim",
     opts = {
       ensure_installed = {
-        -- "csharp-language-server",
-        "omnisharp",
+        "csharp-language-server",
+        -- "omnisharp",
         "netcoredbg",
       },
     },
