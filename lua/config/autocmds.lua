@@ -10,14 +10,31 @@
 -- Trim trailing whitespace + trailing blank lines on save
 vim.api.nvim_create_autocmd("BufWritePre", {
   pattern = "*",
-  callback = function()
+  callback = function(event)
+    local bufnr = event.buf
+
+    -- Respect LazyVim's autoformat toggles
+    if vim.g.autoformat == false or vim.b[bufnr].autoformat == false then
+      return
+    end
+
     local save = vim.fn.winsaveview()
-    -- trim whitespace
-    vim.cmd([[silent! %s/\s\+$//e]])
-    -- trim trailing blank lines
+
+    -- Trim trailing blank lines (run for all files)
     while vim.fn.getline("$") == "" and vim.fn.line("$") > 1 do
       vim.cmd("silent! $delete _")
     end
+
+    -- Skip markdown/mdx files for whitespace trimming (preserve hard breaks)
+    local ft = vim.bo[bufnr].filetype
+    if ft == "markdown" or ft == "mdx" then
+      vim.fn.winrestview(save)
+      return
+    end
+
+    -- Trim trailing whitespace (for non-markdown files)
+    vim.cmd([[keepjumps keeppatterns silent! %s/\s\+$//e]])
+
     vim.fn.winrestview(save)
   end,
 })
