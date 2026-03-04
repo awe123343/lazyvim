@@ -1,73 +1,17 @@
 local prefix = "<leader>S"
 
-local function patch_codesnap_runtime()
-  local data_dir = vim.fn.stdpath("data")
-  local plugin_dir = data_dir .. "/lazy/codesnap.nvim"
-  local generator_so = plugin_dir .. "/lua/generator.so"
-
-  local function ensure_generator_path()
-    if vim.fn.filereadable(generator_so) == 1 then
-      return generator_so
-    end
-    error("CodeSnap: generator.so not found. Run :Lazy build codesnap.nvim", 0)
-  end
-
-  package.loaded["codesnap.fetch"] = {
-    ensure_lib = ensure_generator_path,
-  }
-
-  local patched_module = {
-    generator = nil,
-  }
-
-  function patched_module.get_lib_extension()
-    return "so"
-  end
-
-  function patched_module.generator_file_path()
-    return ensure_generator_path()
-  end
-
-  function patched_module.load_generator()
-    if patched_module.generator then
-      return patched_module.generator
-    end
-
-    local load_func, err = package.loadlib(ensure_generator_path(), "luaopen_generator")
-    if not load_func then
-      error("CodeSnap: failed to load generator: " .. (err or "unknown error"), 0)
-    end
-
-    local ok, module_or_err = pcall(load_func)
-    if not ok then
-      error("CodeSnap: generator init failed: " .. module_or_err, 0)
-    end
-
-    patched_module.generator = module_or_err
-    package.loaded["generator"] = module_or_err
-    return patched_module.generator
-  end
-
-  package.loaded["codesnap.module"] = patched_module
-end
-
 return {
   "mistricky/codesnap.nvim",
-  build = "make build_generator && rm -rf lua/libs",
   config = function(_, opts)
-    patch_codesnap_runtime()
-
     local codesnap = require("codesnap")
     codesnap.setup(opts)
 
     local static = require("codesnap.static")
-    local module = require("codesnap.module")
     local config_module = require("codesnap.config")
-    local generator = module.load_generator()
+    local generator = require("generator")
 
-    -- Ensure save_path always exists so commands do not crash
-    static.config.save_path = static.config.save_path or opts.save_path or "~/Pictures/codesnap"
-
+    -- Upstream main.save is broken (references undefined `config` local and
+    -- has no fallback to static.config.save_path), so override it.
     codesnap.save = function(save_path)
       local path = save_path
       if path == nil or path == "" then
@@ -88,25 +32,22 @@ return {
       vim.notify("Save snapshot in " .. path .. " successfully")
     end
 
-    local function redefine_command(name, fn)
-      vim.api.nvim_create_user_command(name, function(params)
-        local arg = params.fargs[1]
-        local ok, err = xpcall(function()
-          fn(arg)
-        end, debug.traceback)
-        if not ok then
-          vim.notify(err, vim.log.levels.ERROR)
-        end
-      end, { nargs = "*", range = "%", force = true })
-    end
-
-    redefine_command("CodeSnapSave", codesnap.save)
+    -- Upstream plugin/codesnap.lua captures codesnap.save at load time,
+    -- so we must re-register the command to pick up our override.
+    vim.api.nvim_create_user_command("CodeSnapSave", function(params)
+      local ok, err = xpcall(function()
+        codesnap.save(params.fargs[1])
+      end, debug.traceback)
+      if not ok then
+        vim.notify(err, vim.log.levels.ERROR)
+      end
+    end, { nargs = "*", range = "%", force = true })
   end,
   cmd = {
     "CodeSnap",
     "CodeSnapSave",
     "CodeSnapHighlight",
-    "CodeSnapSaveHighlight",
+    "CodeSnapHighlightSave",
     "CodeSnapASCII",
   },
   keys = {
@@ -126,7 +67,7 @@ return {
       prefix .. "H",
       function()
         local filename = "~/Pictures/codesnap/" .. os.date("%Y-%m-%d-%H%M%S") .. ".png"
-        return ":'<,'>CodeSnapSaveHighlight " .. filename .. "\r"
+        return ":'<,'>CodeSnapHighlightSave " .. filename .. "\r"
       end,
       desc = "Snapshot highlight save to file",
       mode = "v",
