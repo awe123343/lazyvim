@@ -1,11 +1,11 @@
 -- Oxlint + Oxfmt layered on top of LazyVim eslint/prettier extras
 --
--- Linting: oxlint by default; eslint only when project has eslint config
---          but no oxlint config (eslint-only project)
--- Formatting: oxfmt when project has oxlintrc.json; prettier otherwise
+-- Linting: oxlint when project has oxlint config; eslint only when project has
+--          eslint config but no oxlint config (eslint-only project)
+-- Formatting: oxfmt when project has oxfmt config; prettier otherwise
 --             (handled by the prettier extra)
 
-local js_fts = {
+local oxlint_fts = {
   "javascript",
   "javascriptreact",
   "typescript",
@@ -13,6 +13,29 @@ local js_fts = {
   "vue",
   "svelte",
 }
+
+local oxfmt_fts = {
+  "javascript",
+  "javascriptreact",
+  "typescript",
+  "typescriptreact",
+  "css",
+  "json",
+  "jsonc",
+  "markdown",
+  "markdown.mdx",
+  "mdx",
+  "toml",
+  "yaml",
+  "vue",
+  "svelte",
+}
+
+vim.filetype.add({
+  extension = {
+    mdx = "markdown.mdx",
+  },
+})
 
 local eslint_configs = {
   ".eslintrc",
@@ -32,28 +55,79 @@ local eslint_configs = {
 local oxlint_configs = {
   "oxlintrc.json",
   ".oxlintrc.json",
+  ".oxlintrc.jsonc",
+  "oxlint.config.js",
+  "oxlint.config.cjs",
+  "oxlint.config.mjs",
+  "oxlint.config.ts",
+  "oxlint.config.mts",
+  "oxlint.config.cts",
 }
 
----@param root string
+local oxfmt_configs = {
+  "oxfmtrc.json",
+  ".oxfmtrc.json",
+  ".oxfmtrc.jsonc",
+  "oxfmt.config.js",
+  "oxfmt.config.cjs",
+  "oxfmt.config.mjs",
+  "oxfmt.config.ts",
+  "oxfmt.config.mts",
+  "oxfmt.config.cts",
+}
+
+---@param filename string
 ---@param configs string[]
----@return boolean
-local function has_config(root, configs)
+---@return string? root
+---@return string? config
+local function nearest_config(filename, configs)
+  if not filename or filename == "" then
+    return nil
+  end
+
+  local root = vim.fs.root(filename, configs)
+  if not root then
+    return nil
+  end
+
   for _, name in ipairs(configs) do
-    if vim.uv.fs_stat(root .. "/" .. name) then
-      return true
+    local config = root .. "/" .. name
+    if vim.uv.fs_stat(config) then
+      return root, config
     end
   end
-  return false
+
+  return nil
 end
 
---- True when project has eslint config but no oxlint config.
-local eslint_only = LazyVim.memoize(function(root)
-  return has_config(root, eslint_configs) and not has_config(root, oxlint_configs)
+---@param ctx? {filename?: string}
+---@return string
+local function ctx_filename(ctx)
+  return ctx and ctx.filename or vim.api.nvim_buf_get_name(0)
+end
+
+---@param root string?
+---@param name string
+---@return string
+local function node_bin(root, name)
+  local local_bin = root and (root .. "/node_modules/.bin/" .. name) or nil
+  return local_bin and vim.uv.fs_stat(local_bin) and local_bin or name
+end
+
+--- True when buffer has eslint config but no nearer oxlint config.
+local eslint_only = LazyVim.memoize(function(filename)
+  return nearest_config(filename, eslint_configs) ~= nil
+    and nearest_config(filename, oxlint_configs) == nil
 end)
 
---- True when project has oxlint config.
-local is_oxc_project = LazyVim.memoize(function(root)
-  return has_config(root, oxlint_configs)
+--- True when buffer has oxlint config.
+local is_oxlint_project = LazyVim.memoize(function(filename)
+  return nearest_config(filename, oxlint_configs) ~= nil
+end)
+
+--- True when buffer has oxfmt config.
+local is_oxfmt_project = LazyVim.memoize(function(filename)
+  return nearest_config(filename, oxfmt_configs) ~= nil
 end)
 
 return {
@@ -62,15 +136,28 @@ return {
     "mfussenegger/nvim-lint",
     opts = function(_, opts)
       opts.linters_by_ft = opts.linters_by_ft or {}
-      for _, ft in ipairs(js_fts) do
+      for _, ft in ipairs(oxlint_fts) do
         opts.linters_by_ft[ft] = opts.linters_by_ft[ft] or {}
         table.insert(opts.linters_by_ft[ft], "oxlint")
       end
       opts.linters = opts.linters or {}
       opts.linters.oxlint = {
-        condition = function()
-          return not eslint_only(LazyVim.root.get())
+        condition = function(ctx)
+          return is_oxlint_project(ctx_filename(ctx)) and not eslint_only(ctx_filename(ctx))
         end,
+        cmd = function()
+          local root = nearest_config(vim.api.nvim_buf_get_name(0), oxlint_configs)
+          return node_bin(root, "oxlint")
+        end,
+        args = {
+          "--format",
+          "github",
+          "--config",
+          function()
+            local _, config = nearest_config(vim.api.nvim_buf_get_name(0), oxlint_configs)
+            return config or ""
+          end,
+        },
       }
     end,
   },
@@ -83,7 +170,7 @@ return {
         eslint = {
           root_dir = function(bufnr, on_dir)
             local root = vim.fs.root(bufnr, eslint_configs)
-            if root and not has_config(root, oxlint_configs) then
+            if root and not nearest_config(vim.api.nvim_buf_get_name(bufnr), oxlint_configs) then
               on_dir(root)
             end
           end,
@@ -98,12 +185,29 @@ return {
     opts = function(_, opts)
       opts.formatters = opts.formatters or {}
       opts.formatters.oxfmt = {
-        condition = function()
-          return is_oxc_project(LazyVim.root.get())
+        command = function(_, ctx)
+          local root = nearest_config(ctx_filename(ctx), oxfmt_configs)
+          return node_bin(root, "oxfmt")
+        end,
+        condition = function(_, ctx)
+          return is_oxfmt_project(ctx_filename(ctx))
+        end,
+        cwd = function(_, ctx)
+          local root = nearest_config(ctx_filename(ctx), oxfmt_configs)
+          return root
+        end,
+        args = function(_, ctx)
+          local _, config = nearest_config(ctx_filename(ctx), oxfmt_configs)
+          return {
+            "--config",
+            config,
+            "--stdin-filepath",
+            ctx_filename(ctx),
+          }
         end,
       }
       opts.formatters_by_ft = opts.formatters_by_ft or {}
-      for _, ft in ipairs(js_fts) do
+      for _, ft in ipairs(oxfmt_fts) do
         opts.formatters_by_ft[ft] = opts.formatters_by_ft[ft] or {}
         table.insert(opts.formatters_by_ft[ft], 1, "oxfmt")
         opts.formatters_by_ft[ft].stop_after_first = true
