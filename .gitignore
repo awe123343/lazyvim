@@ -7,3 +7,5 @@ debug
 foo.*
 *.log
 data
+
+docs/superpowers/plans/
