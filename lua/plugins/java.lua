@@ -1,6 +1,9 @@
+local jvm_lsp = require("config.jvm_lsp")
+
 return {
   {
     "mfussenegger/nvim-jdtls",
+    enabled = not jvm_lsp.use_intellij(),
     opts = {
       root_dir = function(path)
         -- Prioritize settings.gradle (only exists at true project root)
