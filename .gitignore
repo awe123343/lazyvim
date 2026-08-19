@@ -8,7 +8,12 @@ foo.*
 *.log
 data
 
-docs/superpowers/plans/
+docs/superpowers/
 docs/research/
 
 CONTEXT.md
+
+
+findings.md
+progress.md
+task_plan.md
