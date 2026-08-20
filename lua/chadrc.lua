@@ -14,6 +14,8 @@ local semantic = {
 M.base46 = {
   theme = "everblush",
   hl_add = {
+    BufferLineFill = { bg = "black2" },
+
     -- Gitsigns current-line blame defaults to `NonText` (very dim in base46/everblush).
     -- Keep it subtle but readable (matches your previous everblush.nvim tweak).
     GitSignsCurrentLineBlame = { fg = light_grey, italic = true },
