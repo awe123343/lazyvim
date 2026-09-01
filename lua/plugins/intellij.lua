@@ -11,6 +11,12 @@ return {
       isolate_index = true,
       organize_imports_on_save = false,
       inlay_hints = true,
+      root_markers = {
+        { "gradlew", "gradlew.bat", "mvnw", "mvnw.cmd" },
+        { "settings.gradle", "settings.gradle.kts", "MODULE.bazel", "WORKSPACE", "WORKSPACE.bazel" },
+        { "build.gradle", "build.gradle.kts", "pom.xml", "BUILD.bazel", "BUILD" },
+        { ".git" },
+      },
     },
     config = function(_, opts)
       require("config.intellij_lsp").setup(opts)
