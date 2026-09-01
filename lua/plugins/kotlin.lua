@@ -44,6 +44,11 @@ return {
   {
     "stevearc/conform.nvim",
     opts = {
+      formatters = {
+        ktfmt = {
+          prepend_args = { "--meta-style" },
+        },
+      },
       formatters_by_ft = {
         kotlin = { "ktfmt", "ktlint" },
       },
