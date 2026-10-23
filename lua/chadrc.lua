@@ -1,5 +1,8 @@
 local M = {}
 
+-- Noice owns signature help; NvChad's duplicate requests can focus its popup.
+M.lsp = { signature = false }
+
 local light_grey = "light_grey"
 
 -- Everblush semantic token accents (TokyoNight-style differentiation)
